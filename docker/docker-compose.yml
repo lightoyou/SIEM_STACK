@@ -1,0 +1,54 @@
+version: '3.5'
+
+services:
+    elasticsearch:
+        container_name: elasticsearch
+        build:
+            context: elasticsearch/
+        environment:
+            ES_JAVA_OPTS: "-Xmx2g -Xms2g"
+        volumes:
+            - esdata:/usr/share/elasticsearch/data
+        networks:
+            frontend:
+            
+            
+    kibana:
+        container_name: kibana
+        build:
+            context: kibana/
+        volumes:
+            - ./kibana/dashboards:/usr/share/kibana/dashboards
+            - ./kibana/scripts:/usr/share/kibana/scripts
+            - ./kibana/config/:/usr/share/kibana/config:ro
+        depends_on:
+            - elasticsearch
+        ports:
+            - "5601:5601"
+        networks:
+            frontend:
+        
+    
+    logstash:
+        container_name: logstash
+        build:
+            context: logstash/
+        volumes:
+            - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+            - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+        environment:
+            LS_JAVA_OPTS: "-Xmx2g -Xms2g"
+        depends_on:
+            - elasticsearch
+            - kibana
+        ports:
+            - "5044:5044"
+        networks:
+            frontend:
+
+volumes:
+    esdata:
+        driver: local
+            
+networks:
+    frontend:
